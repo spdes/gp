@@ -5,7 +5,7 @@ are found in `./latex` and `./scripts`, respectively.
 
 # History
 
-- 2022. In HT2022 Advanced Probabilistic Machine Learning, Uppsala University, Sweden.
+- In HT2022 Advanced Probabilistic Machine Learning, Uppsala University, Sweden, 2022.
 
 # Contact
 
