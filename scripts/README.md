@@ -3,7 +3,7 @@
 To use the codes, please install the dependencies in `requirements.txt` in your favourite Python environment. For
 example, `pip install -r requirements.txt`.
 
-The scripts `lanczos.gp`, `parameter_estimation_mle.py`, and `gp_poisson_regression_laplace.py` 
+The scripts `lanczos_gp.py`, `parameter_estimation_mle.py`, and `gp_poisson_regression_laplace.py` 
 are written in JAX. To use them, please install `jax` and `jaxopt` by `pip install -r requirements_additional.txt`.
 
 # Files
@@ -13,7 +13,7 @@ The Python codes in `./scripts` are as follows.
 1. `./bw_kkt_expansion.py`: Kosambi--Karhunen--Loève expansion of Brownian motion. Related to Section 3.5.
 2. `./circulant_embedding.py`: Sampling from stationary GP using circulant embedding. Related to Section 3.6.
 3. `./affine-gp.py`: Generate samples from an affine GP from definition. Related to Figure 1 and Equation 1.
-4. `./gp_examples.py`: A gallery of a bunch of example GPs. Related to Section 2.1.
+4. `./gp_examples.py`: A gallery of a bunch of example GPs. This shows how to draw GP samples and is Related to Section 2.1.
 5. `./gp_poisson_regression_laplace.py`: Laplace approximation to a GP regression model with Poisson likelihood.
    Related to Example 24.
 6. `./lanczos_gp.py`: Approximate GP sampling by Lánczos iteration. Related to Section 3.4.
