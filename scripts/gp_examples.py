@@ -7,77 +7,61 @@ Zheng Zhao 2022
 zheng.zhao@it.uu.se
 """
 import math
-import jax
-import jax.numpy as jnp
+import numpy as np
 import matplotlib.pyplot as plt
 from functools import partial
-from jax.config import config
 from typing import Sequence
 
-config.update("jax_enable_x64", True)
 
-
-@partial(jax.vmap, in_axes=[0, None, None])
-@partial(jax.vmap, in_axes=[None, 0, None])
-def cov_affine(t, s, params: Sequence[float]):
+def cov_affine(ts, ss, params: Sequence[float]):
     """Covariance function of the affine GP.
     """
     ma, mb, va, vb = params
-    return va * t * s + vb - (t + s) * ma * mb
+    return va * ts[:, None] * ss[None, :] + vb - (ts[:, None] + ss[None, :]) * ma * mb
 
 
-@partial(jax.vmap, in_axes=[0, None, None])
-@partial(jax.vmap, in_axes=[None, 0, None])
-def cov_fBM(t, s, r):
+def cov_fBM(ts, ss, r):
     """Covariance function of factional Brownian motion.
 
     When r = 0.5, this reduces to that of a standard Brownian motion.
     """
     p = 2 * r
-    return 0.5 * (jnp.abs(t) ** p + jnp.abs(s) ** p - jnp.abs(t - s) ** p)
+    return 0.5 * (np.abs(ts)[:, None] ** p + np.abs(ss)[None, :] ** p - np.abs(ts[:, None] - ss[None, :]) ** p)
 
 
-@partial(jax.vmap, in_axes=[0, None, None, None])
-@partial(jax.vmap, in_axes=[None, 0, None, None])
-def cov_m12(t, s, ell, sigma):
+def cov_m12(ts, ss, ell, sigma):
     """Matern 1/2 (exponential) covariance function.
     """
-    return sigma ** 2 * jnp.exp(-jnp.abs(t - s) / ell)
+    return sigma ** 2 * np.exp(-np.abs(ts[:, None] - ss[None, :]) / ell)
 
 
-@partial(jax.vmap, in_axes=[0, None, None, None])
-@partial(jax.vmap, in_axes=[None, 0, None, None])
-def cov_m32(t, s, ell, sigma):
+def cov_m32(ts, ss, ell, sigma):
     """Matern 3/2 covariance function.
     """
-    p = math.sqrt(3) * jnp.abs(t - s) / ell
-    return sigma ** 2 * (1 + p) * jnp.exp(-p)
+    p = math.sqrt(3) * np.abs(ts[:, None] - ss[None, :]) / ell
+    return sigma ** 2 * (1 + p) * np.exp(-p)
 
 
-@partial(jax.vmap, in_axes=[0, None, None, None])
-@partial(jax.vmap, in_axes=[None, 0, None, None])
-def cov_rbf(t, s, ell, sigma):
+def cov_rbf(ts, ss, ell, sigma):
     """Radial basis covariance function.
     """
-    p = (t - s) / ell
-    return sigma ** 2 * jnp.exp(-0.5 * p ** 2)
+    p = (ts[:, None] - ss[None, :]) / ell
+    return sigma ** 2 * np.exp(-0.5 * p ** 2)
 
 
-@partial(jax.vmap, in_axes=[0, None])
-@partial(jax.vmap, in_axes=[None, 0])
-def cov_cos(t, s):
+def cov_cos(ts, ss):
     """Cosine covariance function.
     """
-    return jnp.cos(s - t)
+    return np.cos(ss[:, None] - ts[None, :])
 
 
 # Times
 T = 500
-ts = jnp.linspace(0., 5., T)
-grids = jnp.meshgrid(ts, ts, indexing='ij')
+ts = np.linspace(0., 5., T)
+grids = np.meshgrid(ts, ts, indexing='ij')
 
 # Random seed and number of samples
-key = jax.random.PRNGKey(666)
+np.random.seed(888)
 num_samples = 10
 
 # Pseudo diagonal jitter for improving the condition number of covariance matrix
@@ -98,17 +82,17 @@ def plot_fBM():
 
     for ind, r in zip([0, 1],
                       [0.5, 0.9]):
-        cov_matrix = cov_fBM(ts, ts, r) + jnp.eye(T) * eps
+        cov_matrix = cov_fBM(ts, ts, r) + np.eye(T) * eps
 
         # Plot samples
-        for subkey in jax.random.split(key, num=num_samples):
-            sample = jnp.linalg.cholesky(cov_matrix) @ jax.random.normal(subkey, (T,))
+        for _ in range(num_samples):
+            sample = np.linalg.cholesky(cov_matrix) @ np.random.randn(T)
             axes[0, ind].plot(ts, sample)
 
         # Plot .95 region
         axes[0, ind].fill_between(ts,
-                                  -1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
-                                  1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
+                                  -1.96 * np.sqrt(np.diag(cov_matrix)),
+                                  1.96 * np.sqrt(np.diag(cov_matrix)),
                                   color='black',
                                   edgecolor='none',
                                   alpha=0.15,
@@ -144,8 +128,8 @@ def plot_matern():
     ell, sigma = 1., 1.
     cov_matrix = cov_m12(ts, ts, ell, sigma)
 
-    for subkey in jax.random.split(key, num=num_samples):
-        sample = jnp.linalg.cholesky(cov_matrix) @ jax.random.normal(subkey, (T,))
+    for _ in range(num_samples):
+        sample = np.linalg.cholesky(cov_matrix) @ np.random.randn(T)
         axes[0, 0].plot(ts, sample)
 
     # Plot cov matrix
@@ -153,8 +137,8 @@ def plot_matern():
 
     # Plot .95 region
     axes[0, 0].fill_between(ts,
-                            -1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
-                            1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
+                            -1.96 * np.sqrt(np.diag(cov_matrix)),
+                            1.96 * np.sqrt(np.diag(cov_matrix)),
                             color='black',
                             edgecolor='none',
                             alpha=0.15,
@@ -167,12 +151,12 @@ def plot_matern():
 
     # Plot Matern 3/2 with different ells and sigmas
     for ind, (ell, sigma) in zip([1, 2, 3],
-                                 [(1., 1.), (0.5, 1.), (1., 0.5)]):
+                                 [(1., 1.), (0.3, 1.), (1., 0.5)]):
         cov_matrix = cov_m32(ts, ts, ell, sigma)
 
         # Plot samples
-        for subkey in jax.random.split(key, num=num_samples):
-            sample = jnp.linalg.cholesky(cov_matrix) @ jax.random.normal(subkey, (T,))
+        for _ in range(num_samples):
+            sample = np.linalg.cholesky(cov_matrix) @ np.random.randn(T)
             axes[0, ind].plot(ts, sample)
 
         # Plot cov matrix
@@ -180,8 +164,8 @@ def plot_matern():
 
         # Plot .95 region
         axes[0, ind].fill_between(ts,
-                                  -1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
-                                  1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
+                                  -1.96 * np.sqrt(np.diag(cov_matrix)),
+                                  1.96 * np.sqrt(np.diag(cov_matrix)),
                                   color='black',
                                   edgecolor='none',
                                   alpha=0.15,
@@ -205,17 +189,17 @@ def plot_rbf():
     plt.figure(figsize=(8, 5))
 
     ell, sigma = 1., 1.
-    cov_matrix = cov_rbf(ts, ts, ell, sigma) + jnp.eye(T) * eps
+    cov_matrix = cov_rbf(ts, ts, ell, sigma) + np.eye(T) * eps
 
     # Plot samples
-    for subkey in jax.random.split(key, num=num_samples):
-        sample = jnp.linalg.cholesky(cov_matrix) @ jax.random.normal(subkey, (T,))
+    for _ in range(num_samples):
+        sample = np.linalg.cholesky(cov_matrix) @ np.random.randn(T)
         plt.plot(ts, sample)
 
     # Plot .95 region
     plt.fill_between(ts,
-                     -1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
-                     1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
+                     -1.96 * np.sqrt(np.diag(cov_matrix)),
+                     1.96 * np.sqrt(np.diag(cov_matrix)),
                      color='black',
                      edgecolor='none',
                      alpha=0.15,
@@ -235,17 +219,17 @@ def plot_rbf():
 # Plot sinusoidal GPs
 def plot_cos():
     T = 500
-    ts = jnp.linspace(0., 10., T)
-    grids = jnp.meshgrid(ts, ts, indexing='ij')
+    ts = np.linspace(0., 10., T)
+    grids = np.meshgrid(ts, ts, indexing='ij')
 
     fig, axes = plt.subplots(figsize=(12, 5), nrows=1, ncols=2, sharex=True)
 
-    cov_matrix = cov_cos(ts, ts) + jnp.eye(T) * eps
+    cov_matrix = cov_cos(ts, ts) + np.eye(T) * eps
 
     # Plot samples
-    for subkey in jax.random.split(key, num=num_samples):
-        a, b = jax.random.normal(subkey, (2,))
-        sample = a * jnp.sin(ts) + b * jnp.cos(ts)
+    for _ in range(num_samples):
+        a, b = np.random.randn(2)
+        sample = a * np.sin(ts) + b * np.cos(ts)
         axes[0].plot(ts, sample)
 
     # Plot cov matrix
@@ -253,8 +237,8 @@ def plot_cos():
 
     # Plot .95 region
     axes[0].fill_between(ts,
-                         -1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
-                         1.96 * jnp.sqrt(jnp.diag(cov_matrix)),
+                         -1.96 * np.sqrt(np.diag(cov_matrix)),
+                         1.96 * np.sqrt(np.diag(cov_matrix)),
                          color='black',
                          edgecolor='none',
                          alpha=0.15,

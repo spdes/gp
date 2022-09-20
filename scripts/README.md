@@ -3,7 +3,7 @@
 To use the codes, please install the dependencies in `requirements.txt` in your favourite Python environment. For
 example, `pip install -r requirements.txt`.
 
-The scripts `gp_examples.py`, `lanczos.gp`, `parameter_estimation_mle.py`, and `gp_poisson_regression_laplace.py` 
+The scripts `lanczos.gp`, `parameter_estimation_mle.py`, and `gp_poisson_regression_laplace.py` 
 are written in JAX. To use them, please install `jax` and `jaxopt` by `pip install -r requirements_additional.txt`.
 
 # Files
