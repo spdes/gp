@@ -21,7 +21,7 @@ def cov_func(ts, ss, params):
     """Covariance function of the affine GP, see Example 2.
     """
     ma, mb, va, vb = params
-    return va * ts[:, None] * ss[None, :] + vb - (ts[:, None] + ss[None, :]) * ma * mb
+    return va * ts[:, None] * ss[None, :] + vb
 
 
 # Number of samples
