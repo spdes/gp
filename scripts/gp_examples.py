@@ -17,7 +17,7 @@ def cov_affine(ts, ss, params: Sequence[float]):
     """Covariance function of the affine GP.
     """
     ma, mb, va, vb = params
-    return va * ts[:, None] * ss[None, :] + vb - (ts[:, None] + ss[None, :]) * ma * mb
+    return va * ts[:, None] * ss[None, :] + vb
 
 
 def cov_fBM(ts, ss, r):
